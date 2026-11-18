@@ -1,0 +1,47 @@
+@page "/"
+@inject EmployeeRegister Register
+
+<PageTitle>Payslip</PageTitle>
+
+<header class="topbar">
+    <span class="brand">Payroll</span>
+    <span class="period">@PayMonth</span>
+</header>
+
+<main class="payslip">
+    <h1>Payslip</h1>
+
+    <section class="employee">
+        <div class="name">@employee.Name</div>
+        <div class="muted">Employee @employee.Id</div>
+    </section>
+
+    <table class="lines">
+        <tbody>
+            @foreach (var line in slip.Earnings)
+            {
+                <tr><td>@line.Label</td><td class="amount">@Money.Format(line.Amount)</td></tr>
+            }
+            <tr class="total"><td>Gross salary</td><td class="amount">@Money.Format(slip.Gross)</td></tr>
+            @foreach (var line in slip.Deductions)
+            {
+                <tr><td>@line.Label</td><td class="amount">-@Money.Format(line.Amount)</td></tr>
+            }
+            <tr class="net"><td>Net salary</td><td class="amount">@Money.Format(slip.Net)</td></tr>
+        </tbody>
+    </table>
+</main>
+
+@code {
+    /// <summary>The month this payslip is for. Every month is calculated the same way.</summary>
+    public const string PayMonth = "November 2026";
+
+    private Employee employee = default!;
+    private Payslip slip = default!;
+
+    protected override void OnInitialized()
+    {
+        employee = Register.All[0];
+        slip = PayslipCalculator.Calculate(employee);
+    }
+}

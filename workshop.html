@@ -1,0 +1,1414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Harness Engineering Workshop</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600&display=swap">
+<style>
+/* Layout: sticky top bar, a left rail with the contents, one reading column.
+   Orange = the model reasons. Blue = code decides. */
+:root {
+  --bg: #f4f6f8; --surface: #ffffff; --ink: #17212b; --muted: #566373; --line: #d8dee5;
+  --code-bg: #edf1f5;
+  --accent: #0a6a94; --accent-soft: #e0eff6;      /* code decides */
+  --model: #a8500a; --model-soft: #fbeddb;        /* model reasons */
+  --pass: #1d7448; --pass-soft: #e1f2e9; --fail: #b0271f; --fail-soft: #fbe5e3;
+  --fac: #6b4fa0; --fac-soft: #efeaf8;            /* facilitator notes */
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+  --bar-h: 52px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1319; --surface: #151c25; --ink: #e4eaf0; --muted: #94a2b2; --line: #273241;
+    --code-bg: #0a0f15;
+    --accent: #62bde6; --accent-soft: #11303f; --model: #f0a45f; --model-soft: #3a2710;
+    --pass: #5cc691; --pass-soft: #10301f; --fail: #f28c84; --fail-soft: #3b1614;
+    --fac: #b59ce6; --fac-soft: #261d3a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1319; --surface: #151c25; --ink: #e4eaf0; --muted: #94a2b2; --line: #273241;
+  --code-bg: #0a0f15;
+  --accent: #62bde6; --accent-soft: #11303f; --model: #f0a45f; --model-soft: #3a2710;
+  --pass: #5cc691; --pass-soft: #10301f; --fail: #f28c84; --fail-soft: #3b1614;
+  --fac: #b59ce6; --fac-soft: #261d3a;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--bar-h) + env(safe-area-inset-top, 0px) + 16px); }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.6; }
+a { color: var(--accent); text-underline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+h1, h2, h3 { font-family: var(--font-head); line-height: 1.2; text-wrap: balance; margin: 0; }
+h1 { font-size: 2.1rem; }
+h2 { font-size: 1.65rem; }
+h3 { font-size: 1.05rem; font-family: var(--font-body); font-weight: 600; margin-top: 4px; }
+p { margin: 0; }
+code, pre, kbd { font-family: var(--font-mono); font-size: 0.86rem; }
+code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+pre code { background: none; padding: 0; overflow-wrap: normal; }
+
+/* top bar */
+.bar { position: sticky; top: 0; z-index: 9; background: var(--surface); border-bottom: 1px solid var(--line); }
+.bar-in { max-width: 1180px; margin: 0 auto; min-height: var(--bar-h); display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding-block: 6px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.brand { font-family: var(--font-head); font-weight: 600; font-size: 1.05rem; margin-right: auto; }
+.brand small { font-family: var(--font-body); font-weight: 400; color: var(--muted); font-size: 0.8rem; margin-left: 8px; }
+.toggle { font: 500 0.8rem var(--font-body); color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; cursor: pointer; }
+.toggle[aria-pressed="true"] { background: var(--fac-soft); color: var(--ink); border-color: var(--fac); }
+
+/* page frame */
+.frame { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 40px;
+  padding-block: 28px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.toc { position: sticky; top: calc(var(--bar-h) + 20px); align-self: start; display: flex; flex-direction: column; gap: 2px; font-size: 0.9rem; }
+.toc a { display: flex; justify-content: space-between; gap: 8px; padding: 5px 10px; border-radius: 6px; color: var(--muted); text-decoration: none; border-left: 2px solid transparent; }
+.toc a:hover { color: var(--ink); background: var(--surface); }
+.toc a.here { color: var(--ink); border-left-color: var(--accent); background: var(--surface); }
+.toc .count { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.toc .sep { height: 1px; background: var(--line); margin: 8px 10px; }
+main { min-width: 0; display: flex; flex-direction: column; gap: 64px; }
+section { display: flex; flex-direction: column; gap: 16px; max-width: 800px; }
+section > p, section li { max-width: 68ch; }
+.eyebrow { font: 500 0.75rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.lede { font-size: 1.12rem; color: var(--muted); }
+.muted { color: var(--muted); }
+
+@media (max-width: 900px) {
+  .frame { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .toc { position: static; flex-direction: row; overflow-x: auto; gap: 6px; padding-bottom: 6px; }
+  .toc a { white-space: nowrap; border: 1px solid var(--line); border-left-width: 1px; background: var(--surface); }
+  .toc a.here { border-color: var(--accent); }
+  .toc .sep, .toc .count { display: none; }
+  h1 { font-size: 1.7rem; } h2 { font-size: 1.4rem; }
+}
+
+/* pipeline strip */
+.pipe { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 3px; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.pipe .st { font: 500 0.74rem var(--font-mono); padding: 3px 8px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); border-style: dashed; white-space: nowrap; }
+.pipe .st.on { border-style: solid; border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
+.pipe .st.on.model { border-color: var(--model); background: var(--model-soft); }
+.pipe .st.new { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.pipe .st.new.model { background: var(--model); border-color: var(--model); }
+.pipe .arrow { color: var(--muted); font-size: 0.8rem; }
+.pipe-note { flex-basis: 100%; font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.8rem; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: baseline; }
+
+/* blocks */
+.code { position: relative; }
+.code pre, pre.plain { margin: 0; background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; overflow-x: auto; line-height: 1.5; }
+.code button { position: absolute; top: 6px; right: 6px; font: 500 0.7rem var(--font-body); color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 2px 7px; cursor: pointer; opacity: 0.85; }
+.code button:hover { color: var(--ink); }
+.code .file { font: 500 0.72rem var(--font-mono); color: var(--muted); margin-bottom: 4px; }
+.out pre { border-left: 3px solid var(--line); }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; counter-reset: step; }
+.steps > li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; counter-increment: step; }
+.steps > li > .body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.steps > li > .body:first-child { grid-column: 1 / -1; }
+.steps > li > .body > p:first-child::before { content: counter(step) ". "; font: 500 0.9rem var(--font-mono); color: var(--accent); }
+.steps input[type="checkbox"] { width: 20px; height: 20px; margin: 3px 0 0; accent-color: var(--accent); cursor: pointer; }
+.steps > li.done > .body > p:first-child { color: var(--muted); }
+.box { border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; background: var(--surface); }
+.box > .tag { font: 500 0.75rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.box.why > .tag { color: var(--accent); }
+.box.check { border-color: var(--pass); } .box.check > .tag { color: var(--pass); }
+.box.reflect > .tag { color: var(--model); }
+.box.stretch > .tag { color: var(--muted); }
+.box.warn { border-color: var(--fail); } .box.warn > .tag { color: var(--fail); }
+.box.note { border-color: var(--accent); } .box.note > .tag { color: var(--accent); }
+.agenda tr.talk td { color: var(--muted); }
+.box ul, .box ol, section > ul, section > ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+:root:not(.fac) .fac-only { display: none; }
+.box.facnote { background: var(--fac-soft); border-color: var(--fac); }
+.box.facnote > .tag { color: var(--fac); }
+details.ref { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+details.ref > summary { cursor: pointer; padding: 10px 16px; font-weight: 500; }
+details.ref > .in { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 0.75rem var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.agenda td:first-child { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.agenda tr.break td { color: var(--muted); }
+.startrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 0.9rem; color: var(--muted); }
+.startrow input { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; }
+.ideas { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.ideas > div { border-top: 2px solid var(--accent); padding-top: 10px; display: flex; flex-direction: column; gap: 4px; }
+.ideas > div.m { border-top-color: var(--model); }
+.ideas strong { font-family: var(--font-head); font-size: 1.05rem; }
+.menu { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.menu a { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); text-decoration: none; }
+.menu a:hover { border-color: var(--accent); }
+.menu a strong { font-family: var(--font-head); font-size: 1.02rem; }
+.menu a span { color: var(--muted); font-size: 0.88rem; }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand">Harness Engineering <small>3-hour hands-on workshop · GitHub Copilot SDK · .NET</small></div>
+  </div>
+</header>
+
+<div class="frame">
+<nav class="toc" aria-label="Contents">
+  <a href="#idea">The idea</a>
+  <a href="#agenda">Agenda</a>
+  <a href="#setup">Before you start</a>
+  <div class="sep"></div>
+  <a href="#lab-1">Lab 1 · Naive loop <span class="count" data-count="lab-1"></span></a>
+  <a href="#lab-2">Lab 2 · Steps are skills <span class="count" data-count="lab-2"></span></a>
+  <a href="#lab-3">Lab 3 · Quality gate <span class="count" data-count="lab-3"></span></a>
+  <a href="#lab-4">Lab 4 · Feedback, retry <span class="count" data-count="lab-4"></span></a>
+  <a href="#lab-5">Lab 5 · Agentic review <span class="count" data-count="lab-5"></span></a>
+  <a href="#lab-6">Lab 6 · Observability <span class="count" data-count="lab-6"></span></a>
+  <a href="#lab-7">Lab 7 · Improvement loop <span class="count" data-count="lab-7"></span></a>
+  <div class="sep"></div>
+  <a href="#menu">Menu</a>
+  <a href="#menu-a">A · Worktree <span class="count" data-count="menu-a"></span></a>
+  <a href="#menu-b">B · Guardrails <span class="count" data-count="menu-b"></span></a>
+  <a href="#menu-c">C · OpenTelemetry <span class="count" data-count="menu-c"></span></a>
+  <a href="#menu-d">D · Tools and MCP</a>
+  <div class="sep"></div>
+  <a href="#wrap">Wrap-up</a>
+  <a href="#reference">Reference</a>
+</nav>
+
+<main>
+
+<!-- ============================================================ IDEA -->
+<section id="idea">
+  <div class="eyebrow">The question</div>
+  <h1>How do you trust an agent to work on its own?</h1>
+  <p class="lede">Not by reading everything it does, and not by hoping. You build a development loop around the model: code decides the order of the steps, checks the result, sends problems back, and keeps the evidence. That loop is the harness.</p>
+
+  <div class="ideas">
+    <div class="m"><strong>The model reasons, code decides</strong><span class="muted">The agent plans, writes and reviews. The order of the steps, the retries and the verdict are plain C#.</span></div>
+    <div><strong>Every step is a skill</strong><span class="muted">The harness has no prompts. It calls <code>/plan</code>, <code>/implement</code>, <code>/review</code>. Skills, quality gate and work items live in the repository, owned by its developers.</span></div>
+    <div><strong>Feedback is an instruction</strong><span class="muted">A failing gate or review goes back to the agent. Write that output for the agent that has to fix it, not as a log.</span></div>
+    <div><strong>Evidence lives with the work</strong><span class="muted">Plan, gate results and reviews land in the work item folder, and travel with the branch to the human reviewer.</span></div>
+  </div>
+
+  <h3>Where you start</h3>
+  <p>About 55 lines of C# that plan, implement and commit. The prompts are hard-coded in the harness, and nothing checks the result.</p>
+  <div class="pipe" data-start="1"></div>
+
+  <h3>Where you can end up</h3>
+  <p>Over seven labs you grow it into a loop like this one. The orange steps are the model. The blue ones are yours.</p>
+  <div class="pipe" data-lab="7" data-all="1"></div>
+  <div class="legend"><span><i style="background:var(--model)"></i>the model reasons</span><span><i style="background:var(--accent)"></i>code decides</span><span><i style="border:1px dashed var(--muted)"></i>outside today's code</span></div>
+  <div class="box note">
+    <span class="tag">One possibility, not the answer</span>
+    <p>This is the loop we build today, and it is only one of many. The harness is plain code, so you can build any loop: add a step (a security scan, a design check), drop one, change the order, or retry on other signals. Shape it to how your team works.</p>
+  </div>
+
+</section>
+
+<!-- ============================================================ AGENDA -->
+<section id="agenda">
+  <div class="eyebrow">180 minutes</div>
+  <h2>Agenda</h2>
+  <div class="startrow"><label for="start-time">Workshop starts at</label><input type="time" id="start-time" value="13:00"></div>
+  <div class="tablewrap">
+  <table class="agenda">
+    <thead><tr><th>Time</th><th>Block</th><th>You leave it with</th><th class="num">Min</th></tr></thead>
+    <tbody>
+      <tr data-min="10"><td></td><td>Opening</td><td>The trust question and the loop you will build</td><td class="num">10</td></tr>
+      <tr data-min="15"><td></td><td><a href="#lab-1">Lab 1 · The naive loop</a></td><td>A first run, and the question what you actually know about it</td><td class="num">15</td></tr>
+      <tr data-min="5" class="talk"><td></td><td>Explanation</td><td>Context for the next lab</td><td class="num">5</td></tr>
+      <tr data-min="20"><td></td><td><a href="#lab-2">Lab 2 · Every step is a skill</a></td><td>A harness without prompts</td><td class="num">20</td></tr>
+      <tr data-min="5" class="talk"><td></td><td>Explanation</td><td>Context for the next lab</td><td class="num">5</td></tr>
+      <tr data-min="15"><td></td><td><a href="#lab-3">Lab 3 · A quality gate the repo owns</a></td><td>Nothing is committed unless code says it is green</td><td class="num">15</td></tr>
+      <tr data-min="10" class="break"><td></td><td>Break</td><td></td><td class="num">10</td></tr>
+      <tr data-min="5" class="talk"><td></td><td>Explanation</td><td>Context for the next lab</td><td class="num">5</td></tr>
+      <tr data-min="20"><td></td><td><a href="#lab-4">Lab 4 · Feedback the agent can act on</a></td><td>Gate output written as instructions, and a bounded retry</td><td class="num">20</td></tr>
+      <tr data-min="5" class="talk"><td></td><td>Explanation</td><td>Context for the next lab</td><td class="num">5</td></tr>
+      <tr data-min="20"><td></td><td><a href="#lab-5">Lab 5 · Agentic review</a></td><td>A review skill, and a follow-up that turns it into data</td><td class="num">20</td></tr>
+      <tr data-min="10"><td></td><td><a href="#lab-6">Lab 6 · Observability</a></td><td>Every event of every step, in the work item folder</td><td class="num">10</td></tr>
+      <tr data-min="5" class="talk"><td></td><td>Explanation</td><td>Context for the next lab</td><td class="num">5</td></tr>
+      <tr data-min="20"><td></td><td><a href="#lab-7">Lab 7 · The improvement loop</a></td><td>An agent that reads the evidence and proposes how to make the loop stronger</td><td class="num">20</td></tr>
+      <tr data-min="10"><td></td><td><a href="#wrap">Wrap-up</a></td><td>The human review, and a checklist for your own repository</td><td class="num">10</td></tr>
+      <tr data-min="5" class="talk"><td></td><td>Buffer</td><td></td><td class="num">5</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="muted">Labs 1 to 7 build on each other. Fell behind? Every lab has a <a href="#catch-up">snapshot</a> to catch up from. The <a href="#menu">menu</a> is for after the workshop: its items don't build on each other, so pick whatever is most useful for your own work.</p>
+</section>
+
+<!-- ============================================================ SETUP -->
+<section id="setup">
+  <div class="eyebrow">Prerequisites</div>
+  <h2>Before you start</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>You need</th><th>Check</th></tr></thead>
+    <tbody>
+      <tr><td>.NET SDK 10 or later</td><td><code>dotnet --version</code>. We run a single C# file with <code>dotnet run loop.cs</code>, which needs .NET 10.</td></tr>
+      <tr><td>A GitHub account with Copilot</td><td>The SDK signs in as you: through <code>copilot login</code>, <code>gh auth login</code>, or a <code>GH_TOKEN</code>. No separate Copilot CLI install is needed: the SDK downloads its own runtime.</td></tr>
+      <tr><td>An interactive Copilot</td><td>The Copilot CLI (<code>copilot</code>) or Copilot Chat in VS Code. For Lab 7 and the stretch goals, where you work with the same skills by hand.</td></tr>
+      <tr><td>git, with your name and email set</td><td><code>git config user.email</code></td></tr>
+      <tr><td>PowerShell 7</td><td><code>pwsh --version</code>. The quality gate is a PowerShell script, and every command on this page is PowerShell: run them in a <code>pwsh</code> terminal, on macOS and Linux too.</td></tr>
+      <tr><td>Network access to nuget.org and github.com</td><td>The first run downloads the SDK package and its Copilot runtime.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Check them in one go:</p>
+  <div class="code"><pre><code>dotnet --version
+pwsh --version
+git config user.name
+git config user.email</code></pre></div>
+
+  <h3>What is in the starter folder</h3>
+  <div class="tablewrap">
+  <table>
+    <tbody>
+      <tr><td><code>loop.cs</code></td><td>The development loop: about 55 lines of C# that drive Copilot through the Copilot SDK. You grow this file today.</td></tr>
+      <tr><td><code>app/</code></td><td>The repository the agent works in: <code>payroll</code>, a one-page Blazor app that shows a monthly payslip, calculated from an HR register (a CSV file). Today it only ever shows the first employee, and only part of what the register holds. The rules (part-time factor, wage tax brackets, tax credit) are simplified and made up; <code>app/README.md</code> lists them.</td></tr>
+      <tr><td><code>app/.workitems/</code></td><td>One folder per work item: <code>T01</code> choose the employee, <code>T02</code> show the contract, <code>T03</code> pension premium. <code>task.md</code> says what to build. Every step of the loop writes its output next to it.</td></tr>
+      <tr><td><code>app/.github/skills/</code></td><td>Skills the loop calls. Empty at the start.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Make <code>app/</code> a repository</h3>
+  <div class="code"><pre><code>cd app
+git init -b main
+git add -A
+git commit -m "baseline"
+cd ..</code></pre></div>
+  <p>Run all other commands on this page from the starter folder, the one that contains <code>loop.cs</code>, in a <code>pwsh</code> terminal. Try the app once, so you know what the agent works on: start it with the command below, open <a href="http://localhost:5080">http://localhost:5080</a>, look at the payslip, and stop it with <kbd>Ctrl+C</kbd>. It runs on plain http, so no development certificate is needed.</p>
+  <div class="code"><pre><code>dotnet run --project app/src/Payroll</code></pre></div>
+
+  <div class="box warn" id="between-runs">
+    <span class="tag">Between runs</span>
+    <p>Every lab runs the loop on a work item, and every lab ends by undoing that run, so the next lab starts from your own work only: the skills and the gate you committed. We suggest <code>T01</code> every time, so you can compare runs. Take <code>T02</code> or <code>T03</code> if you are curious; undo them the same way.</p>
+    <p>The loop commits on <code>main</code> (until <a href="#menu-a">menu A</a> fixes that). So commit your own changes in <code>app/</code> (skills, gate) <em>before</em> a run: then undoing the run never throws away your work.</p>
+    <p>Undo a run that committed:</p>
+    <div class="code"><pre><code>git -C app reset --hard HEAD~1</code></pre></div>
+    <p>Undo a run that stopped without a commit:</p>
+    <div class="code"><pre><code>git -C app reset --hard
+git -C app clean -fd</code></pre></div>
+  </div>
+
+  <div class="box note" id="catch-up">
+    <span class="tag">Fell behind? Catch up</span>
+    <p>The folder <code>snapshots/</code>, next to <code>starter/</code>, holds the starter as it is at the end of every lab: <code>snapshots/lab-3/</code> has <code>loop.cs</code> and <code>app/</code> after Lab 3. To start Lab 4 without finishing Lab 3, undo any run first, then copy the snapshot of the previous lab over your starter folder and commit it:</p>
+    <div class="code"><pre><code>Copy-Item ../snapshots/lab-3/* . -Recurse -Force
+git -C app add -A
+git -C app commit -m "Catch up to the end of Lab 3"</code></pre></div>
+  </div>
+</section>
+
+<!-- ============================================================ LAB 1 -->
+<section id="lab-1" class="lab">
+  <div class="eyebrow">Lab 1 · 15 min</div>
+  <h2>The naive loop</h2>
+  <div class="pipe" data-lab="1"></div>
+  <p>Before you improve anything, run what you have and look at it with the eyes of a reviewer.</p>
+
+  <ol class="steps">
+    <li><div class="body">
+      <p>Read <code>loop.cs</code>. It is the whole harness: two prompts, two git commands, and a helper that opens an agent session in <code>app/</code>. Note <code>PermissionHandler.ApproveAll</code>: every tool call the agent wants is approved.</p>
+    </div></li>
+    <li><div class="body">
+      <p>Run it on the first work item. The first run downloads the SDK and the Copilot runtime and builds the file, which takes a minute or more: the console stays quiet until the plan step starts. If the build fails while downloading (for example <code>MSB3923</code>), run it again. After that you see the tools the agent uses scroll by. A run takes one or two minutes: time to read <code>app/README.md</code> and <code>app/.workitems/T01/task.md</code>, so you know what the agent was asked.</p>
+      <div class="code"><pre><code>dotnet run loop.cs T01</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Look at what it did.</p>
+      <div class="code"><pre><code>git -C app show --stat
+git -C app show -- src</code></pre></div>
+      <p>Open <code>app/.workitems/T01/plan.md</code> as well.</p>
+    </div></li>
+    <li><div class="body">
+      <p>Check it yourself. Run the tests:</p>
+      <div class="code"><pre><code>dotnet test app</code></pre></div>
+      <p>Then start the app, open <a href="http://localhost:5080">http://localhost:5080</a> and try the dropdown:</p>
+      <div class="code"><pre><code>dotnet run --project app/src/Payroll</code></pre></div>
+      <p>Does the work meet <code>task.md</code>? How long did it take you to find out?</p>
+    </div></li>
+    <li><div class="body">
+      <p>Undo the run, so later labs start from the baseline:</p>
+      <div class="code"><pre><code>git -C app reset --hard HEAD~1</code></pre></div>
+    </div></li>
+  </ol>
+
+  <div class="box reflect">
+    <span class="tag">Reflect</span>
+    <ul>
+      <li>Who decided this was done? On what basis?</li>
+      <li>If the tests had failed, what would have happened?</li>
+      <li>The prompts that define how your team works are hard-coded in the harness. Who can change them, and how would you review that change?</li>
+      <li>What evidence is left for a human reviewer, apart from the diff?</li>
+    </ul>
+  </div>
+
+</section>
+
+<!-- ============================================================ LAB 2 -->
+<section id="lab-2" class="lab">
+  <div class="eyebrow">Lab 2 · 20 min</div>
+  <h2>Every step is a skill</h2>
+  <div class="pipe" data-lab="2"></div>
+  <div class="box why">
+    <span class="tag">Why</span>
+    <p>A prompt in C# is policy hidden in plumbing. Move the instructions into skills in the repository: versioned with the code, reviewed in pull requests, and the same for a developer working with Copilot by hand. The harness only says <em>which</em> step runs, <em>for which</em> work item. It calls a skill like a slash command: <code>/plan .workitems/T01/task.md</code>.</p>
+  </div>
+
+  <ol class="steps">
+    <li><div class="body">
+      <p>Create the plan skill. A skill is a folder with a <code>SKILL.md</code>.</p>
+      <div class="code"><div class="file">app/.github/skills/plan/SKILL.md</div><pre><code>---
+name: plan
+description: Writes an implementation plan for a work item. Use when invoked as /plan &lt;task file&gt;.
+argument-hint: &lt;task file&gt;
+---
+
+# Plan a work item
+
+The argument is the task file of a work item, for example `.workitems/T01/task.md`, written by a human.
+
+1. Read the task file. Then read `AGENTS.md`, `README.md` and the code and tests that the task touches.
+2. Write `plan.md` next to the task file, with these sections:
+   - **Goal**: one or two sentences.
+   - **Changes**: per file, what changes and why.
+   - **Tests**: the unit tests to add, one line each. Include every example and every error case from the task.
+3. Do not change any other file.
+
+Reply with one line: the path of the plan.</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Create the implement skill. Write it yourself first; compare with this one afterwards.</p>
+      <div class="code"><div class="file">app/.github/skills/implement/SKILL.md</div><pre><code>---
+name: implement
+description: Implements a work item from its plan. Use when invoked as /implement &lt;work item folder&gt;.
+argument-hint: &lt;work item folder&gt;
+---
+
+# Implement a work item
+
+The argument is a work item folder, for example `.workitems/T01`, with `plan.md`.
+
+## Steps
+
+1. Read `plan.md` in that folder.
+2. Implement it: change the code and add the unit tests from the plan. Follow the style of the existing code.
+
+## Rules
+
+- Do not change `task.md`, anything under `.github/`, or `quality-gate.ps1`.
+- Never delete, skip or weaken a test to make it pass.
+- Do not commit. The harness does that.
+
+Reply with a short summary: which files you changed and which tests you added.</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>In <code>loop.cs</code>, stop hard-coding where work items live. Replace the line that sets <code>id</code>: the loop now gets the path of the task file, and everything else follows from it.</p>
+      <div class="code"><div class="file">loop.cs, instead of var id = args[0];</div><pre><code>var task = args[0];                           // the task file, relative to the repository: .workitems/T01/task.md
+var workItem = Path.GetDirectoryName(task)!.Replace('\\', '/');  // its folder: every step writes its output next to the task
+var id = Path.GetFileName(workItem);          // a short name, for the commit message</code></pre></div>
+      <p>Then replace the two <code>Ask</code> lines. No prompt text is left: only the step name for the console, a skill, and its argument. The plan skill gets the task file; the implement skill gets the folder and finds the plan there itself.</p>
+      <div class="code"><div class="file">loop.cs</div><pre><code>await Ask("plan", $"/plan {task}");
+await Ask("implement", $"/implement {workItem}");</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Commit the skills. They are part of the repository now.</p>
+      <div class="code"><pre><code>git -C app add .github
+git -C app commit -m "Add plan and implement skills"</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Run it on <code>T01</code> again, so you can compare with Lab 1. From now on you pass the task file, relative to <code>app/</code>. In the tool list you now see <code>skill</code> first: the agent loads the skill, then follows it.</p>
+      <div class="code"><pre><code>dotnet run loop.cs .workitems/T01/task.md</code></pre></div>
+      <p>Open <code>app/.workitems/T01/plan.md</code>. Does it have the three sections? Does the plan select employees by number, not by name, as the technical notes in <code>task.md</code> ask?</p>
+    </div></li>
+    <li><div class="body">
+      <p>Undo the run. Your skills stay: they are in their own commit.</p>
+      <div class="code"><pre><code>git -C app reset --hard HEAD~1</code></pre></div>
+    </div></li>
+  </ol>
+
+  <div class="box check">
+    <span class="tag">Check</span>
+    <p><code>loop.cs</code> contains no instructions for the model any more: the two <code>Ask</code> calls send a skill name and a path, nothing else.</p>
+  </div>
+
+  <div class="box reflect">
+    <span class="tag">Reflect</span>
+    <ul>
+      <li>A developer wants the plan to include a rollback section. What do they change, and who reviews it?</li>
+      <li>What is still policy inside <code>loop.cs</code>? (Look at the model name and at <code>ApproveAll</code>.)</li>
+    </ul>
+  </div>
+
+  <div class="box reflect">
+    <span class="tag">Reflect</span>
+    <ul>
+      <li>The implement skill says: do not change <code>task.md</code>, anything under <code>.github/</code>, or <code>quality-gate.ps1</code>. That rule is only an instruction, so it is a weak guard: under pressure, a failing test or a stubborn review finding, the agent may ignore it. What happens then?</li>
+      <li>To make the rule hard, take it out of the prompt and put it in code: a guardrail, a hook that sees every tool call before it runs and blocks the ones that break the rule. <a href="#menu-b">Menu B · Guardrails</a> builds one.</li>
+    </ul>
+  </div>
+
+  <div class="box stretch">
+    <span class="tag">Stretch</span>
+    <p>Open Copilot by hand in <code>app/</code> and use the same skill there. The loop and the developer now share one definition of "plan".</p>
+  </div>
+
+</section>
+
+<!-- ============================================================ LAB 3 -->
+<section id="lab-3" class="lab">
+  <div class="eyebrow">Lab 3 · 15 min</div>
+  <h2>A quality gate the repository owns</h2>
+  <div class="pipe" data-lab="3"></div>
+  <div class="box why">
+    <span class="tag">Why</span>
+    <p>"All tests pass" from the agent is a claim, not proof. And an agent forgets: it may skip the build, run only the tests it just wrote, or leave out a check your team always does. So we don't trust the agent to remember. After every implement step, code runs the build, the entire test suite and every other check that must always pass on a change: a deterministic check, the same every time, whatever the agent did or said. Code decides. But <em>which</em> checks is not the harness's business: every repository has its own. So the harness runs a script in the root of the repository, <code>quality-gate.ps1</code>. Exit code 0 means green. The developers own the script, just like the skills.</p>
+  </div>
+
+  <ol class="steps">
+    <li><div class="body">
+      <p>Write a first, simple gate.</p>
+      <div class="code"><div class="file">app/quality-gate.ps1</div><pre><code># Quality gate of this repository. Exit code 0 = pass.
+
+dotnet build
+if ($LASTEXITCODE -ne 0) { exit 1 }
+
+dotnet test --no-build
+exit $LASTEXITCODE</code></pre></div>
+      <div class="box note">
+        <span class="tag">An example, not the finish line</span>
+        <p>Build and test are only where this example starts, because that is all this small repository has. Your gate should check what <em>your</em> repository needs, and it grows with every mistake you want to stop for good: formatting with <code>dotnet format --verify-no-changes</code>, a security scan with Aikido, coverage thresholds, architecture rules, linters, a check that migrations run, a check that nothing outside the task's folders changed. Each check is a few more lines in this script, written by the team that owns the repository. The harness does not change: it only looks at the exit code.</p>
+      </div>
+    </div></li>
+    <li><div class="body">
+      <p>Try it by hand, from inside <code>app/</code>:</p>
+      <div class="code"><pre><code>cd app
+pwsh ./quality-gate.ps1
+echo $LASTEXITCODE
+cd ..</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>In <code>loop.cs</code>, run the gate after the implement step. Save its output in the work item folder, and stop before the commit when it fails.</p>
+      <div class="code"><div class="file">loop.cs, after the implement step</div><pre><code>var (exitCode, output) = Run("pwsh", "-NoProfile -File quality-gate.ps1", check: false);
+File.WriteAllText(Path.Combine(repo, workItem, "gate-1.md"), output);
+if (exitCode != 0)
+{
+    Console.WriteLine($"Quality gate FAILED, see {workItem}/gate-1.md. Nothing is committed.");
+    return;
+}</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Commit the gate:</p>
+      <div class="code"><pre><code>git -C app add quality-gate.ps1
+git -C app commit -m "Add quality gate"</code></pre></div>
+      <p>Then run the loop on <code>T01</code>, and open <code>app/.workitems/T01/gate-1.md</code>:</p>
+      <div class="code"><pre><code>dotnet run loop.cs .workitems/T01/task.md</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Undo the run. If the gate failed, the loop did not commit: use the second command from <a href="#between-runs">Between runs</a> instead.</p>
+      <div class="code"><pre><code>git -C app reset --hard HEAD~1</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Now read a failing gate. Break a test by hand: in <code>app/tests/Payroll.Tests/WageTaxTests.cs</code>, change <code>756.29m</code> into <code>756.30m</code>. Run the gate again and save what it prints:</p>
+      <div class="code"><pre><code>cd app
+pwsh ./quality-gate.ps1 > ../gate-raw.txt
+cd ..</code></pre></div>
+      <p>Open <code>gate-raw.txt</code>. Read it as if you are the agent that must fix this. How many lines are there? How many of them help? Keep the file and the broken test for Lab 4.</p>
+    </div></li>
+  </ol>
+
+  <div class="box check">
+    <span class="tag">Check</span>
+    <p>A run with a red gate leaves the changes uncommitted, with a <code>gate-1.md</code> that says why.</p>
+  </div>
+
+  <div class="box reflect">
+    <span class="tag">Reflect</span>
+    <ul>
+      <li>Why a script in the repository, and not C# in the harness? Think of a second repository in Java, or the CI pipeline that should run the same gate.</li>
+      <li>The agent can edit files. Could it edit <code>quality-gate.ps1</code> to make itself pass? What stops it today? (<a href="#menu-b">Menu B</a> is one answer.)</li>
+    </ul>
+  </div>
+
+</section>
+
+<!-- ============================================================ LAB 4 -->
+<section id="lab-4" class="lab">
+  <div class="eyebrow">Lab 4 · 20 min</div>
+  <h2>Feedback the agent can act on</h2>
+  <div class="pipe" data-lab="4"></div>
+  <div class="box why">
+    <span class="tag">Why</span>
+    <p>A red gate is only useful if the next attempt knows exactly what to fix. The gate's output <em>is</em> the next prompt. So write it like one: only the signal, where to look, and what to do and what not. Then let code send it back to the implement step, a limited number of times.</p>
+  </div>
+
+  <h3>What good gate output contains</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Property</th><th>Instead of</th><th>Write</th></tr></thead>
+    <tbody>
+      <tr><td>Only the signal</td><td>Restore, build and test runner noise</td><td>The compiler errors, or the failing tests. Nothing else.</td></tr>
+      <tr><td>Where to look</td><td>Absolute paths from the build machine</td><td><code>tests\Payroll.Tests\WageTaxTests.cs:9</code>, relative to the repository</td></tr>
+      <tr><td>What to do, and what not</td><td>Nothing: the agent guesses</td><td>"Decide whether the code or the test is wrong. Fix the code unless the test contradicts the task. Never delete or weaken a test."</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <ol class="steps">
+    <li><div class="body">
+      <p>Rewrite <code>quality-gate.ps1</code> so that it prints instructions. Start from the reference below: copy it over your gate and read how it works. It uses <code>dotnet test --logger trx</code>: the TRX report is XML with each failing test, its message and its stack trace, which is much easier to filter than the console output. Then make the <code>How to fix</code> parts your own: write the instructions you would want if you had to fix this, and the rules your team cares about.</p>
+      <details class="ref"><summary>Reference: quality-gate.ps1</summary><div class="in">
+      <div class="code"><div class="file">app/quality-gate.ps1</div><pre><code># Quality gate of this repository. The development loop runs it after every implement step.
+#   Exit code 0 = pass, anything else = fail.
+#   Everything printed here goes to the agent that has to fix it, so write instructions, not a log.
+
+$root = (Get-Location).Path + [IO.Path]::DirectorySeparatorChar
+function Relative([string]$text) { $text.Replace($root, '') }
+
+# 1. Build. Warnings count as errors in this repository (Directory.Build.props).
+$build = dotnet build --nologo -v quiet -clp:NoSummary 2&gt;&amp;1 | ForEach-Object { "$_" }
+if ($LASTEXITCODE -ne 0) {
+    $errors = $build | Where-Object { $_ -match ': (error|warning) [A-Z]+\d+' } |
+        ForEach-Object { Relative ($_ -replace '\s*\[[^\]]+\]\s*$', '') } | Sort-Object -Unique
+    '# Quality gate: FAILED at build'
+    ''
+    'The code does not compile. Fix every error below.'
+    ''
+    if ($errors) { $errors | ForEach-Object { "- $_" } } else { $build | Select-Object -Last 30 }
+    ''
+    '## How to fix'
+    ''
+    '- Fix the cause in the code. Do not suppress warnings and do not delete code or tests to make an error go away.'
+    '- Check your fix with `dotnet build`.'
+    exit 1
+}
+
+# 2. Tests. The TRX report gives us each failing test with its message and location.
+Remove-Item TestResults -Recurse -Force -ErrorAction SilentlyContinue
+$test = dotnet test --no-build --nologo --logger 'trx;LogFileName=gate.trx' --results-directory TestResults 2&gt;&amp;1 | ForEach-Object { "$_" }
+if ($LASTEXITCODE -eq 0) {
+    '# Quality gate: PASSED'
+    ''
+    'The build is clean and all tests pass.'
+    exit 0
+}
+
+$trx = Get-ChildItem TestResults -Recurse -Filter gate.trx | Select-Object -First 1
+if (-not $trx) {
+    '# Quality gate: FAILED at tests'
+    ''
+    'The test run did not finish. Its last output:'
+    ''
+    $test | Select-Object -Last 40
+    exit 1
+}
+
+[xml]$report = Get-Content $trx.FullName -Raw
+$failed = @($report.TestRun.Results.UnitTestResult | Where-Object outcome -eq 'Failed')
+$total = $report.TestRun.ResultSummary.Counters.total
+
+'# Quality gate: FAILED at tests'
+''
+"$($failed.Count) of $total tests fail."
+foreach ($t in $failed) {
+    $message = ($t.Output.ErrorInfo.Message -split "`r?`n" | ForEach-Object { "    $_" }) -join "`n"
+    $frame = $t.Output.ErrorInfo.StackTrace -split "`r?`n" | Where-Object { $_ -match ' in (.+):line (\d+)' } | Select-Object -First 1
+    $location = if ($frame -match ' in (.+):line (\d+)') { "$(Relative $Matches[1]):$($Matches[2])" } else { 'unknown' }
+    ''
+    "## $($t.testName)"
+    ''
+    "- Where: ``$location``"
+    '- What failed:'
+    ''
+    $message
+}
+''
+'## How to fix'
+''
+'- For each failing test, decide whether the code or the test is wrong.'
+'- Fix the code when it does not do what the task asks. Change a test only when it contradicts the task.'
+'- Never delete, skip or weaken a test to make it pass.'
+exit 1</code></pre></div>
+      </div></details>
+      <p class="muted">Every check you add to the gate later works the same way: it prints only its own problems, where to look, and what to do about them.</p>
+    </div></li>
+    <li><div class="body">
+      <p>Run the new gate against the test you broke in Lab 3, and compare with <code>gate-raw.txt</code>. Then also try a compile error: add <code>int x = "text";</code> inside the method in <code>src/Payroll/Payslips/PayslipCalculator.cs</code>. When you are happy, undo both breaks:</p>
+      <div class="code"><pre><code>git -C app checkout -- src tests</code></pre></div>
+      <div class="code out"><pre><code># Quality gate: FAILED at tests
+
+1 of 18 tests fail.
+
+## Payroll.Tests.WageTaxTests.Wage_tax_in_the_first_bracket_only
+
+- Where: `tests\Payroll.Tests\WageTaxTests.cs:9`
+- What failed:
+
+    Assert.Equal() Failure: Values differ
+    Expected: 756.30
+    Actual:   756.29
+
+## How to fix
+
+- For each failing test, decide whether the code or the test is wrong.
+...</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Teach the implement skill about feedback. It gets an optional second argument: the file that says what is wrong with the previous attempt. In <code>app/.github/skills/implement/SKILL.md</code>, replace the <code>description</code> and <code>argument-hint</code>, replace the argument line with this list, and add a new first step.</p>
+      <div class="code"><div class="file">app/.github/skills/implement/SKILL.md</div><pre><code>description: Implements a work item from its plan, or fixes the feedback on an earlier attempt. Use when invoked as /implement &lt;work item folder&gt; [feedback file].
+argument-hint: &lt;work item folder&gt; [feedback file]
+
+Arguments:
+
+1. A work item folder, for example `.workitems/T01`, with `plan.md`.
+2. Optional: a feedback file about the previous attempt. Its changes are still in the working tree.
+   - `gate-N.md` comes from the quality gate. Follow its instructions.
+   - `review-N.json` comes from the code review. Fix every finding with severity `high` or `medium`. Ignore `low`.
+
+## Steps
+
+1. If there is a feedback file, read it first. Fixing it is your job now: do not start over.
+2. Read `plan.md`. ...</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Turn the single attempt in <code>loop.cs</code> into a bounded loop. Replace everything after the plan step, up to the helper functions, with this. Feedback travels as a file path, so every attempt stays on disk.</p>
+      <div class="code"><div class="file">loop.cs</div><pre><code>string? feedback = null;
+for (var attempt = 1; attempt &lt;= 3; attempt++)
+{
+    await Ask($"implement-{attempt}", $"/implement {workItem} {feedback}".Trim());
+
+    feedback = QualityGate(attempt);
+    if (feedback is not null) continue;
+
+    Run("git", "add -A");
+    Run("git", $"commit -m \"{id}\"");
+    Console.WriteLine($"Done: {id} is committed.");
+    return;
+}
+Console.WriteLine($"STOPPED: {id} still has problems after 3 attempts. A human takes over.");
+
+// Runs the repository's quality gate. Returns null when green, otherwise the file with the instructions for the agent.
+string? QualityGate(int attempt)
+{
+    var (exitCode, output) = Run("pwsh", "-NoProfile -File quality-gate.ps1", check: false);
+    var file = $"{workItem}/gate-{attempt}.md";
+    File.WriteAllText(Path.Combine(repo, file), output);
+    Console.WriteLine($"Quality gate: {(exitCode == 0 ? "passed" : "FAILED")}, see {file}");
+    return exitCode == 0 ? null : file;
+}</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Test the retry path. On our three work items the gate is almost always green after the first implement step: the changes are small and the agent runs the payroll tests itself. So simulate a bad first attempt: add this line right after the implement step, inside the loop.</p>
+      <div class="code"><div class="file">loop.cs, temporarily</div><pre><code>if (attempt == 1) File.AppendAllText(Path.Combine(repo, "src/Payroll/Payslips/PayslipCalculator.cs"), "\nclass Sabotage { int Broken() =&gt; \"not a number\"; }\n");</code></pre></div>
+      <p>Commit your gate and skill changes, then run on <code>T01</code>. You should see the gate fail on attempt 1 with a compile error, and attempt 2 fix it. Read <code>gate-1.md</code> and <code>gate-2.md</code>.</p>
+      <div class="code"><pre><code>git -C app add quality-gate.ps1 .github
+git -C app commit -m "Gate output as instructions, implement fixes feedback"
+dotnet run loop.cs .workitems/T01/task.md</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p><strong>Remove the sabotage line</strong> from <code>loop.cs</code>, and undo the run:</p>
+      <div class="code"><pre><code>git -C app reset --hard HEAD~1</code></pre></div>
+    </div></li>
+  </ol>
+
+  <div class="box check">
+    <span class="tag">Check</span>
+    <p>The work item folder has <code>gate-1.md</code> (failed) and <code>gate-2.md</code> (passed), and the commit contains no <code>Sabotage</code> class.</p>
+  </div>
+
+  <div class="box reflect">
+    <span class="tag">Reflect</span>
+    <ul>
+      <li>Run the sabotage once with the simple gate from Lab 3. Does the agent still find the problem? At what cost in time and tokens?</li>
+      <li>Why does the retry start a fresh session instead of continuing the old one?</li>
+      <li>Three attempts, then a human. What would you put in front of that human?</li>
+    </ul>
+  </div>
+
+</section>
+
+<!-- ============================================================ LAB 5 -->
+<section id="lab-5" class="lab">
+  <div class="eyebrow">Lab 5 · 20 min</div>
+  <h2>Agentic review</h2>
+  <div class="pipe" data-lab="5"></div>
+  <div class="box why">
+    <span class="tag">Why</span>
+    <p>The gate only sees what the tests see. Is every requirement in <code>task.md</code> implemented? Are the error cases tested? Did the change stay in scope? That needs a reviewer: a fresh session that did not write the code. The review itself is free text, for humans. But the loop needs a decision. So after the review, a follow-up message <em>in the same session</em> asks for the findings as data: severity, and one line each. Code reads that and decides.</p>
+  </div>
+
+  <ol class="steps">
+    <li><div class="body">
+      <p>Create the review skill. It defines what to check, what <code>high</code>, <code>medium</code> and <code>low</code> mean, and what goes into the JSON the harness asks for afterwards. All of that belongs to the repository. The harness only owns the shape of the JSON. A longer version is in <code>solution/app/.github/skills/review/</code>.</p>
+      <div class="code"><div class="file">app/.github/skills/review/SKILL.md</div><pre><code>---
+name: review
+description: Reviews the uncommitted changes for a work item. Use when invoked as /review &lt;work item folder&gt;.
+argument-hint: &lt;work item folder&gt;
+---
+
+# Review a work item
+
+The argument is a work item folder with `task.md` and `plan.md`. You review; you do not change any file.
+The quality gate has passed: do not run the build or the tests.
+
+1. Read `task.md` and `plan.md`.
+2. See what changed: `git status --short` and `git diff HEAD`. Read new files in full. Ignore `.workitems/`.
+3. Check that every requirement and example in `task.md` is implemented exactly, that error cases are
+   handled and tested, and that nothing outside the task changed.
+
+Severity:
+- **high**: a requirement is missing or wrong, or there is a bug.
+- **medium**: fix before a human reviews it: a missing test, an unhandled edge case, a change outside the task.
+- **low**: a matter of taste. Fine to merge without it.
+
+Reply with the review in Markdown: your verdict, then one section per finding.
+
+## Findings as JSON
+
+When the harness asks for your findings as JSON: one finding per problem from your review, the low ones too,
+explained in a single line. Return an empty list when there is nothing to fix.</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>At the top of <code>loop.cs</code>, under the <code>#:property</code> line, allow the experimental typed reply, and add three usings:</p>
+      <div class="code"><div class="file">loop.cs, top</div><pre><code>#pragma warning disable GHCP001   // typed replies are experimental in the SDK
+
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Serialization;</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Add the review step and the shape of its result. Both messages carry no instructions: the first calls the skill, the second only asks for the JSON. <code>SendAndWaitAsync&lt;ReviewResult&gt;</code> derives a JSON schema from the records, sends it along with the message, and gives you a typed object back.</p>
+      <div class="code"><div class="file">loop.cs, next to QualityGate</div><pre><code>// The review skill writes the review. A follow-up in the SAME session turns it into data.
+async Task&lt;string?&gt; Review(int attempt)
+{
+    Console.WriteLine($"--- review-{attempt}: started");
+    var timer = Stopwatch.StartNew();
+    await using var session = await NewSession();
+    var review = await session.SendAndWaitAsync($"/review {workItem}", TimeSpan.FromMinutes(30));
+    File.WriteAllText(Path.Combine(repo, workItem, $"review-{attempt}.md"), review?.Data.Content);
+
+    var result = await session.SendAndWaitAsync&lt;ReviewResult&gt;("Your findings as JSON.", timeout: TimeSpan.FromMinutes(5));
+
+    var file = $"{workItem}/review-{attempt}.json";
+    var json = new JsonSerializerOptions { WriteIndented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+    File.WriteAllText(Path.Combine(repo, file), JsonSerializer.Serialize(result, json));
+    var blocking = result!.Findings.Count(f =&gt; f.Severity is Severity.High or Severity.Medium);
+    Console.WriteLine($"--- review-{attempt}: finished in {timer.Elapsed:m\\:ss}, {result.Findings.Count} findings, {blocking} high or medium, see {file}");
+    return blocking &gt; 0 ? file : null;
+}</code></pre></div>
+      <div class="code"><div class="file">loop.cs, at the very end of the file</div><pre><code>record ReviewResult(List&lt;Finding&gt; Findings);
+record Finding(Severity Severity, string Summary);
+[JsonConverter(typeof(JsonStringEnumConverter&lt;Severity&gt;))] enum Severity { High, Medium, Low }</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Call it in the loop, after a green gate. High or medium findings go back to the implement step, exactly like a red gate. The implement skill already knows what to do with a <code>review-N.json</code>.</p>
+      <div class="code"><div class="file">loop.cs, in the loop</div><pre><code>    feedback = QualityGate(attempt);
+    if (feedback is not null) continue;
+
+    feedback = await Review(attempt);
+    if (feedback is not null) continue;</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Commit the review skill, then run the loop on <code>T01</code>. Read <code>review-1.md</code> and <code>review-1.json</code> side by side.</p>
+      <div class="code"><pre><code>git -C app add .github
+git -C app commit -m "Add review skill"
+dotnet run loop.cs .workitems/T01/task.md</code></pre></div>
+      <div class="code out"><pre><code>{
+  "Findings": [
+    {
+      "Severity": "Low",
+      "Summary": "tests/Payroll.Tests/HomePageTests.cs and Home.razor (OnEmployeeChanged): no test triggers choosing another employee, so the Daan and Fatima tests would still pass if the change handler were broken or removed. The plan accepts this and leaves interaction to a manual browser check."
+    }
+  ]
+}</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Undo the run:</p>
+      <div class="code"><pre><code>git -C app reset --hard HEAD~1</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Experiment with the contract. In the review skill, remove the line "Return an empty list when there is nothing to fix.", commit, and run again. What ends up in the list now? Note that you changed the behaviour of the loop without touching <code>loop.cs</code>.</p>
+      <div class="code"><pre><code>git -C app commit -am "Experiment: no empty list"
+dotnet run loop.cs .workitems/T01/task.md</code></pre></div>
+      <p>Then undo both the run and the experiment. (If the run stopped without a commit, use <code>HEAD~1</code> instead, followed by <code>git -C app clean -fd</code>.)</p>
+      <div class="code"><pre><code>git -C app reset --hard HEAD~2</code></pre></div>
+    </div></li>
+  </ol>
+
+  <div class="box check">
+    <span class="tag">Check</span>
+    <p>The loop now commits only after a green gate <em>and</em> a review without high or medium findings. The work item folder holds the plan, every gate result, every review and every review verdict.</p>
+  </div>
+
+  <div class="box reflect">
+    <span class="tag">Reflect</span>
+    <ul>
+      <li>Why ask for the JSON in a follow-up, instead of making the review skill reply in JSON straight away?</li>
+      <li>The JSON shape lives in the harness; what goes into it, and what each severity means, lives in the repository. Is that the right split?</li>
+      <li>The reviewer is the same model that wrote the code. How independent is it? What would you change? (To try another model for the review only, give <code>NewSession</code> a <code>model</code> parameter, and pass <code>"claude-opus-5.5"</code> from <code>Review</code>.)</li>
+    </ul>
+  </div>
+
+</section>
+
+<!-- ============================================================ LAB 6 -->
+<section id="lab-6" class="lab">
+  <div class="eyebrow">Lab 6 · 10 min</div>
+  <h2>Observability</h2>
+  <div class="pipe" data-lab="6"></div>
+  <div class="box why">
+    <span class="tag">Why</span>
+    <p>Every run of the loop should leave a record of what it actually did, not only what the agent says it did. That record is a necessary artifact of every run, next to the plan, the gate results and the reviews. You need it to trace a run step by step, and the improvement loop in Lab 7 reads it to find where the loop is weak. The SDK emits an event for everything: the skill that was invoked, every tool call and its output, every model call with its tokens. One line of code writes them all, into the work item folder, where they are committed with the rest of the evidence.</p>
+  </div>
+  <ol class="steps">
+    <li><div class="body">
+      <p>Give <code>NewSession</code> a step name, and write every event of that step as one JSON line in the work item folder. Note the braces: <code>NewSession</code> becomes a method body instead of a single <code>=&gt;</code> expression. The second console line shows every tool call that failed, or that something refused.</p>
+      <div class="code"><div class="file">loop.cs</div><pre><code>async Task&lt;CopilotSession&gt; NewSession(string step)
+{
+    var log = Path.Combine(repo, workItem, $"{step}.events.jsonl");
+    var gate = new object();
+    return await client.CreateSessionAsync(new SessionConfig
+    {
+        // ... Model, WorkingDirectory, and so on, as before ...
+        OnEvent = e =&gt;
+        {
+            lock (gate) File.AppendAllText(log, e.ToJson() + "\n");
+            if (e is ToolExecutionStartEvent t) Console.WriteLine($"  {step}: {t.Data.ToolName}");
+            if (e is ToolExecutionCompleteEvent { Data.Success: false } c) Console.WriteLine($"  {step}: FAILED {c.Data.Error?.Message}");
+        },
+    });
+}</code></pre></div>
+      <p>Pass the step name where it is called. <code>Ask</code> already has one (<code>plan</code>, <code>implement-1</code>, ...); in <code>Review</code>, use the attempt:</p>
+      <div class="code"><div class="file">loop.cs, in Ask</div><pre><code>await using var session = await NewSession(step);</code></pre></div>
+      <div class="code"><div class="file">loop.cs, in Review</div><pre><code>await using var session = await NewSession("review-" + attempt);</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Run the loop on <code>T01</code>. Then ask the logs a question: what did each step cost?</p>
+      <div class="code"><pre><code>dotnet run loop.cs .workitems/T01/task.md</code></pre></div>
+      <div class="code"><pre><code>Get-ChildItem app/.workitems/T01/*.events.jsonl | ForEach-Object {
+    $events = Get-Content $_ | ConvertFrom-Json
+    $usage  = $events | Where-Object type -eq 'assistant.usage'
+    [pscustomobject]@{
+        Step       = $_.Name -replace '\.events\.jsonl$', ''
+        ModelCalls = $usage.Count
+        ToolCalls  = ($events | Where-Object type -eq 'tool.execution_start').Count
+        InTokens   = ($usage.data.inputTokens  | Measure-Object -Sum).Sum
+        OutTokens  = ($usage.data.outputTokens | Measure-Object -Sum).Sum
+    }
+} | Format-Table</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Undo the run. The logs go with it: they were part of the commit.</p>
+      <div class="code"><pre><code>git -C app reset --hard HEAD~1</code></pre></div>
+    </div></li>
+  </ol>
+
+  <div class="box check">
+    <span class="tag">Check</span>
+    <p>The loop's commit has <code>plan.events.jsonl</code>, <code>implement-1.events.jsonl</code> and <code>review-1.events.jsonl</code> in the work item folder, and the query shows a row per step.</p>
+  </div>
+
+  <div class="box reflect">
+    <span class="tag">Reflect</span>
+    <p>The event logs are committed with the work, next to the plan, the gate results and the reviews: about 0.5 to 1 MB per step. Who reads them, and when? Would you keep them in the repository, next to the merge request, or send them to a log store?</p>
+  </div>
+</section>
+
+<!-- ============================================================ LAB 7 -->
+<section id="lab-7" class="lab">
+  <div class="eyebrow">Lab 7 · 20 min</div>
+  <h2>The improvement loop</h2>
+  <div class="pipe" data-lab="7"></div>
+  <div class="box why">
+    <span class="tag">Why</span>
+    <p>Every run leaves evidence: the task, the plan, every gate result, every review, and the full event log. So far that evidence answered one question: was this work item done well? It can also answer a second one: where is the <em>loop itself</em> weak? A retry that a clearer skill would have prevented, a review finding the gate could have caught, a rule the agent tried to break, a command it ran ten times: each of those is something to engineer away. An agent can do the reading and propose changes to the skills, the gate and the hooks. That is not a step of the harness. You run it yourself, in an interactive session, and you decide which changes go in, with a normal pull request. <strong>That outer loop is how trust grows over time.</strong></p>
+  </div>
+  <div class="pipe static" aria-label="The improvement loop">
+    <span class="st on">the loop runs work items</span><span class="arrow" aria-hidden="true">›</span>
+    <span class="st on">evidence in the work item folders</span><span class="arrow" aria-hidden="true">›</span>
+    <span class="st on model">you + /improve, interactive</span><span class="arrow" aria-hidden="true">›</span>
+    <span class="st">you pick: pull request on skills, gate, hooks</span><span class="arrow" aria-hidden="true">›</span>
+    <span class="st on">better runs</span>
+    <div class="pipe-note">The outer loop, outside the harness. The agent proposes; the people who own the rules decide.</div>
+  </div>
+
+  <ol class="steps">
+    <li><div class="body">
+      <p>Create the improve skill. It reads the evidence of one work item and finds the cause of each problem in the repository's own configuration.</p>
+      <div class="code"><div class="file">app/.github/skills/improve/SKILL.md</div><pre><code>---
+name: improve
+description: Studies how the development loop handled one or more work items and proposes changes that make the loop stronger. Use when invoked as /improve &lt;work item folder&gt; [more work item folders].
+argument-hint: &lt;work item folder&gt; [more work item folders]
+---
+
+# Improve the development loop
+
+The arguments are work item folders that have been through the development loop. Each holds `task.md`, `plan.md`,
+a `gate-N.md` per attempt, `review-N.md` and `review-N.json` per review, and an event log per step:
+`&lt;step&gt;.events.jsonl`, one JSON event per line. The logs are large: search them, do not read them in full.
+
+The loop is configured by files in this repository: the skills in `.github/skills/`, `quality-gate.ps1`,
+and the hooks in `.github/hooks/`, if there are any.
+
+1. Per work item, reconstruct what happened: the attempts, why each one failed, which tool calls failed or were
+   denied, and what the agent spent most of its tool calls on. With several work items, look for what repeats.
+2. Look for what cost time or trust, and find its cause in that configuration. For example: a gate failure or a
+   review finding that a clearer skill would have prevented, a review finding that the gate could check,
+   a rule that the agent broke or tried to break, the same command run again and again, feedback that was misread.
+3. Do not change any file. The developer decides which proposals to apply.
+
+Reply in Markdown with at most five proposals, most valuable first. For each: the file to change, the change
+itself (the exact text to add or replace), and the evidence (a file and line, or an event) that shows why.
+If the runs went smoothly, say so: no proposals is a fine answer.</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Commit the skill. Then give it fresh evidence: run <code>T01</code> through the loop and keep the result, so do not undo it yet. Its review usually notes, as low or as medium, that no test fires the dropdown's change event. Which severity is right, and where should that rule live?</p>
+      <div class="code"><pre><code>git -C app add .github
+git -C app commit -m "Add improve skill"
+dotnet run loop.cs .workitems/T01/task.md</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Open an interactive Copilot session in <code>app/</code>, the way you work every day, and call the skill yourself:</p>
+      <div class="code"><pre><code>cd app
+copilot</code></pre></div>
+      <div class="code"><div class="file">in the Copilot session</div><pre><code>/improve .workitems/T01</code></pre></div>
+      <p>Judge each proposal like a reviewer would. Is it concrete? Ask the agent to show you the evidence: is it real? Does it change the repository's rules, or does it ask for something only <code>loop.cs</code> could do? Push back where you disagree; it is a conversation.</p>
+    </div></li>
+    <li><div class="body">
+      <p>Close the loop. First keep the numbers of this run: run the query from Lab 6 and keep its table. Then undo the run, so your improvement does not land on top of it:</p>
+      <div class="code"><pre><code>git -C app reset --hard HEAD~1</code></pre></div>
+      <p>Pick one proposal you agree with and apply it, in the same session or by hand. Review the diff and commit it: in real life, that is a pull request your team reviews. Then run <code>T01</code> through the loop again, and compare the query's table with the one you kept.</p>
+    </div></li>
+    <li><div class="body">
+      <p>Undo the second run. Your improvement stays: it is in its own commit.</p>
+      <div class="code"><pre><code>git -C app reset --hard HEAD~1</code></pre></div>
+    </div></li>
+  </ol>
+
+  <div class="box check">
+    <span class="tag">Check</span>
+    <p><code>loop.cs</code> did not change in this lab. One proposal, backed by evidence from a run, is now a commit in <code>app/</code>, made by you.</p>
+  </div>
+
+  <div class="box reflect">
+    <span class="tag">Reflect</span>
+    <ul>
+      <li>Why is this not a step of the harness? What would go wrong if the loop changed its own skills after every run?</li>
+      <li>One work item is one data point. Try <code>/improve</code> over several folders at once. What would you find over the last twenty work items?</li>
+      <li>How do you know a change made the loop better, and not just different?</li>
+    </ul>
+  </div>
+
+</section>
+
+<!-- ============================================================ MENU -->
+<section id="menu">
+  <div class="eyebrow">After the workshop · or when you finish early</div>
+  <h2>Menu</h2>
+  <p>The core loop works. These extensions are not on the agenda: take them home, or start one when you finish a lab early. They are independent of each other. Choose what matters most for your own team.</p>
+  <div class="menu">
+    <a href="#menu-a"><strong>A · Worktree per work item</strong><span>Isolation: a branch and a folder per work item, and runs that can continue where they stopped.</span></a>
+    <a href="#menu-b"><strong>B · Guardrails</strong><span>A hook in the repository decides which tool calls are allowed. The agent cannot touch the rules.</span></a>
+    <a href="#menu-c"><strong>C · OpenTelemetry</strong><span>Standard traces of every step, next to the event log, for any tracing backend.</span></a>
+    <a href="#menu-d"><strong>D · Tools and MCP</strong><span>Give the agent typed tools: Playwright, your own C# functions.</span></a>
+  </div>
+</section>
+
+<!-- ============================================================ MENU A -->
+<section id="menu-a" class="lab">
+  <div class="eyebrow">Menu A · 10-15 min</div>
+  <h2>A worktree per work item</h2>
+  <p>Right now the loop works on <code>main</code> in your only checkout. Give every work item its own branch, in its own folder: <code>main</code> is never touched, two work items can run side by side, and the branch is ready to push for review.</p>
+  <ol class="steps">
+    <li><div class="body">
+      <p>Replace the line that sets <code>repo</code>:</p>
+      <div class="code"><div class="file">loop.cs</div><pre><code>var repo = Path.GetFullPath($"worktrees/{id}");
+if (!Directory.Exists(repo)) Run("git", $"worktree add \"{repo}\" -b workitem/{id}", Path.GetFullPath("app"));</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Make the plan step skip when a plan exists. Running the same work item again now continues where it stopped: the worktree is the checkpoint.</p>
+      <div class="code"><div class="file">loop.cs</div><pre><code>if (!File.Exists(Path.Combine(repo, workItem, "plan.md"))) await Ask("plan", $"/plan {task}");</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Run a work item, then look. <code>main</code> has not moved.</p>
+      <div class="code"><pre><code>git -C app worktree list
+git -C app log --oneline --all --graph</code></pre></div>
+    </div></li>
+  </ol>
+  <div class="box reflect">
+    <span class="tag">Reflect</span>
+    <p>The worktree branches from what is committed on <code>main</code>. What does that mean for a skill you changed but did not commit?</p>
+  </div>
+  <div class="box stretch">
+    <span class="tag">Stretch</span>
+    <p>Clean up after a merged branch. Delete the branch too, or the next run of <code>T01</code> cannot create it again:</p>
+    <div class="code"><pre><code>git -C app worktree remove ../worktrees/T01
+git -C app branch -D workitem/T01</code></pre></div>
+  </div>
+</section>
+
+<!-- ============================================================ MENU B -->
+<section id="menu-b" class="lab">
+  <div class="eyebrow">Menu B · 15 min</div>
+  <h2>Guardrails</h2>
+  <p>The agent may still do anything: <code>ApproveAll</code>. The implement skill asks it not to touch the task, the skills or <code>quality-gate.ps1</code>, but that is only an instruction. Make the rule hard with a hook. Copilot runs a <code>preToolUse</code> hook before every tool call; the hook sees the tool and its arguments and can deny the call, with a reason that goes back to the agent. The hook lives in the repository, next to the rules it protects, and owned by the same developers. It works in every Copilot session in the repository: the loop, and a developer working by hand. <code>loop.cs</code> does not change.</p>
+  <ol class="steps">
+    <li><div class="body">
+      <p>Register the hook. Copilot loads every JSON file in <code>.github/hooks/</code>.</p>
+      <div class="code"><div class="file">app/.github/hooks/guard.json</div><pre><code>{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "pwsh -NoProfile -File .github/hooks/guard.ps1",
+        "powershell": "pwsh -NoProfile -File .github/hooks/guard.ps1",
+        "cwd": ".",
+        "timeoutSec": 15
+      }
+    ]
+  }
+}</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Write the guard. It reads the tool call from standard input. No output means the call goes ahead.</p>
+      <div class="code"><div class="file">app/.github/hooks/guard.ps1</div><pre><code># Guardrail of this repository. Copilot runs it before every tool call, in every session in this repository:
+# the development loop and a developer working by hand alike.
+# Input (stdin): one JSON object with toolName and toolArgs. Output: nothing to allow, or a deny with a reason for the agent.
+$call = [Console]::In.ReadToEnd() | ConvertFrom-Json
+$tool = if ($call.toolArgs -is [string]) { $call.toolArgs | ConvertFrom-Json } else { $call.toolArgs }
+
+function Deny([string]$reason) {
+    @{ permissionDecision = 'deny'; permissionDecisionReason = $reason } | ConvertTo-Json -Compress
+    exit 0
+}
+
+# The rules are owned by the developers: the task, the skills, the hooks and the quality gate.
+$path = "$($tool.path)" -replace '\\', '/'
+if ($call.toolName -in 'create', 'edit' -and $path -match '/(task\.md|quality-gate\.ps1)$|/\.github/') {
+    Deny "$($tool.path) is owned by the developers. Change the code, not the rules."
+}
+
+# The harness commits, after the gate and the review.
+if ($call.toolName -in 'bash', 'powershell' -and "$($tool.command)" -match 'git\s+(commit|push)') {
+    Deny 'The harness commits. You only change files.'
+}</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Commit the hook, then test it with a work item that asks for the wrong thing. Create <code>app/.workitems/T90/task.md</code>:</p>
+      <div class="code"><div class="file">app/.workitems/T90/task.md</div><pre><code># T90 — Faster quality gate
+
+The quality gate takes too long. Developers wait for it on every change.
+
+## Requirements
+
+### Scenario: the gate only builds
+
+- **Given** the quality gate `quality-gate.ps1`
+- **When** it runs
+- **Then** it builds the code and stops there: the test step is removed
+
+## Done when
+
+- `quality-gate.ps1` only builds.</code></pre></div>
+      <p>Commit it, and run the loop:</p>
+      <div class="code"><pre><code>git -C app add .github .workitems/T90
+git -C app commit -m "Add guard hook and T90"
+dotnet run loop.cs .workitems/T90/task.md</code></pre></div>
+      <p>Watch for <code>FAILED Denied by preToolUse hook</code> in the output. It may not come: the skill rule alone often holds. Then read the implement replies and the reviews in <code>app/.workitems/T90/</code>. Which layer stopped the agent in which attempt? A good one for <code>/improve</code> afterwards (Lab 7).</p>
+    </div></li>
+    <li><div class="body">
+      <p>Undo the run. It should have stopped without a commit; if it did commit, use <code>git -C app reset --hard HEAD~1</code>.</p>
+      <div class="code"><pre><code>git -C app reset --hard
+git -C app clean -fd</code></pre></div>
+    </div></li>
+  </ol>
+  <div class="box reflect">
+    <span class="tag">Reflect</span>
+    <ul>
+      <li>In our test run, the implement skill's rule ("do not change <code>quality-gate.ps1</code>") held in all three attempts, while the reviewer, who does not know that rule, rated "task not done" as high every time. In an earlier run the agent gave in on attempt 3 and only a guard in code stopped it. What does that tell you about instructions as guardrails?</li>
+      <li>The loop spent three attempts on a task that could never pass. How could the loop notice earlier that a work item conflicts with the rules? (Think of the plan step, or an implement reply that says it is blocked.)</li>
+      <li>The hook protects itself: <code>.github/</code> is on its list. Who may change it, and how is that change reviewed?</li>
+      <li>This guard checks names, not intent. How would you get around it? What is the backstop that catches what a guard misses?</li>
+    </ul>
+  </div>
+  <div class="box stretch">
+    <span class="tag">Stretch</span>
+    <p>Open Copilot by hand in <code>app/</code> and ask it to edit <code>quality-gate.ps1</code>. The same hook refuses: one rule, for people and loops alike.</p>
+  </div>
+</section>
+
+<!-- ============================================================ MENU C -->
+<section id="menu-c" class="lab">
+  <div class="eyebrow">Menu C · 10 min · after Lab 6</div>
+  <h2>OpenTelemetry</h2>
+  <p>The event log from Lab 6 is the SDK's own format. OpenTelemetry is the standard: a span for every agent turn, model call and tool call, with tokens and durations, which any tracing backend can read. Write those spans per step as well, next to the events.</p>
+  <ol class="steps">
+    <li><div class="body">
+      <p>Telemetry is set on the client, which starts its own Copilot runtime, not on the session. So each step gets its own client; that costs less than a second per step. Delete the lines at the top that create and start the client, add <code>NewClient</code>, and give <code>NewSession</code> the client as its first parameter:</p>
+    <div class="code"><div class="file">loop.cs</div><pre><code>// One Copilot runtime per step, so every step gets its own OpenTelemetry file.
+async Task&lt;CopilotClient&gt; NewClient(string step)
+{
+    var client = new CopilotClient(new CopilotClientOptions
+    {
+        Telemetry = new TelemetryConfig { ExporterType = "file", FilePath = Path.Combine(repo, workItem, $"{step}.otel.jsonl") },
+    });
+    await client.StartAsync();
+    return client;
+}
+
+async Task&lt;CopilotSession&gt; NewSession(CopilotClient client, string step)</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>In <code>Ask</code> and <code>Review</code>, create the client before the session. <code>await using</code> stops the runtime at the end of the step, and that is when it finishes writing its file:</p>
+    <div class="code"><div class="file">loop.cs, in Ask</div><pre><code>await using var client = await NewClient(step);
+await using var session = await NewSession(client, step);</code></pre></div>
+    <div class="code"><div class="file">loop.cs, in Review</div><pre><code>await using var client = await NewClient("review-" + attempt);
+await using var session = await NewSession(client, "review-" + attempt);</code></pre></div>
+    </div></li>
+    <li><div class="body">
+      <p>Run a work item and open <code>plan.otel.jsonl</code>: one JSON object per line, with spans like <code>invoke_agent</code>, <code>chat &lt;model&gt;</code> and <code>execute_tool &lt;tool&gt;</code>. Each implement attempt has its own file, like its event log. For a real backend, set <code>OtlpEndpoint</code> instead of a file, for example a local Aspire dashboard or Jaeger.</p>
+    </div></li>
+  </ol>
+</section>
+
+<!-- ============================================================ MENU D -->
+<section id="menu-d">
+  <div class="eyebrow">Menu D · read, then try if you like</div>
+  <h2>Tools and MCP</h2>
+  <p>Skills tell the agent <em>how</em> to work. Tools decide what it <em>can</em> do. A typed tool is narrower and more predictable than "run any shell command".</p>
+  <ul>
+    <li><strong>MCP servers</strong> plug in existing tool sets. Useful ones: the <a href="https://github.com/microsoft/playwright-mcp">Playwright MCP server</a> (drive a browser: let the reviewer open the payslip page and try the dropdown of <code>T01</code> for real, instead of trusting the tests), the GitHub MCP server (issues, pull requests), and database or documentation servers.</li>
+    <li><strong>Your own C# functions</strong> become tools with <code>CopilotTool.DefineTool</code>, built on <code>Microsoft.Extensions.AI</code>.</li>
+    <li><strong>Microsoft Agent Framework</strong> wraps a Copilot client as an <code>AIAgent</code> (package <code>Microsoft.Agents.AI.GitHub.Copilot</code>, <code>copilotClient.AsAIAgent(...)</code>), so you can combine Copilot with other agents and add your own tools in a framework-standard way.</li>
+  </ul>
+  <div class="code"><div class="file">loop.cs, in the SessionConfig of NewSession (add using System.ComponentModel; at the top)</div><pre><code>McpServers = new Dictionary&lt;string, McpServerConfig&gt;
+{
+    ["playwright"] = new McpStdioServerConfig { Command = "npx", Args = ["@playwright/mcp@0.0.85"], Tools = ["*"] },
+},
+Tools =
+[
+    CopilotTool.DefineTool(
+        [Description("Returns the task description of a work item.")]
+        (string workItem) =&gt; File.ReadAllText(Path.Combine(repo, workItem, "task.md")),
+        factoryOptions: new() { Name = "get_task" }),
+],</code></pre></div>
+  <div class="box note">
+    <span class="tag">Two things to decide first</span>
+    <ul>
+      <li>A Playwright reviewer goes against two rules in <code>app/AGENTS.md</code>: interaction is checked in the browser by a human, and an agent never starts the app. Changing those rules is a decision for the repository's owners, not for the harness. The reviewer would also have to start the app and stop it again.</li>
+      <li>Pin the version of every MCP server, as above. With <code>@latest</code> and <code>ApproveAll</code>, any new release of the server runs on your machine with every tool call approved.</li>
+    </ul>
+  </div>
+  <div class="box reflect">
+    <span class="tag">Reflect</span>
+    <p>Which shell commands does your agent run again and again? Which of them would be safer and cheaper as one typed tool?</p>
+  </div>
+</section>
+
+<!-- ============================================================ WRAP-UP -->
+<section id="wrap">
+  <div class="eyebrow">10 min</div>
+  <h2>Wrap-up: and then a human looks</h2>
+  <p>The loop ends with a commit (on its own branch, once you add <a href="#menu-a">menu A</a>). In real life it goes one step further: push the branch and open a merge request on GitHub or GitLab. That is where the human review happens, in the tool your team already uses. The work item folder travels along: the reviewer sees the task, the plan, every gate result and the agent's review next to the diff.</p>
+  <div class="pipe" data-lab="7" data-all="1"></div>
+  <ul>
+    <li><strong>Push and open the merge request</strong>: two more <code>Run</code> lines (<code>git push -u origin workitem/{id}</code>, and <code>gh pr create</code> or the GitLab CLI). Left out today on purpose.</li>
+    <li><strong>A second loop for review comments</strong>: another small harness can follow up on the merge request. It reads new comments, writes them as a feedback file into the work item folder, calls <code>/implement</code> with it, runs the gate and the review, and pushes again. Same skills, same gate, different trigger.</li>
+  </ul>
+
+  <h3>For your own repository, in this order</h3>
+  <ol>
+    <li>Write down how your team works as skills: plan, implement, review. Commit them.</li>
+    <li>Write the quality gate as a script in the repository. Make its output an instruction, not a log.</li>
+    <li>Keep the harness small and generic: it calls skills and the gate, loops a limited number of times, and decides.</li>
+    <li>Put the evidence where the reviewer is: a work item folder, a branch, a merge request.</li>
+    <li>Every time the agent gets something wrong, fix the skill, the gate or a hook, so it cannot happen again. Let an agent find those moments for you, and let people decide on the fix.</li>
+  </ol>
+
+</section>
+
+<!-- ============================================================ REFERENCE -->
+<section id="reference">
+  <div class="eyebrow">Look it up</div>
+  <h2>Reference</h2>
+
+  <h3>What a run leaves in <code>app/.workitems/&lt;id&gt;/</code></h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>File</th><th>Written by</th><th>Committed</th></tr></thead>
+    <tbody>
+      <tr><td><code>task.md</code></td><td>A human</td><td>yes</td></tr>
+      <tr><td><code>plan.md</code></td><td>The plan skill</td><td>yes</td></tr>
+      <tr><td><code>gate-N.md</code></td><td>The harness: output of <code>quality-gate.ps1</code> for attempt N</td><td>yes</td></tr>
+      <tr><td><code>review-N.md</code></td><td>The harness: the reply of the review skill</td><td>yes</td></tr>
+      <tr><td><code>review-N.json</code></td><td>The harness: the typed follow-up</td><td>yes</td></tr>
+      <tr><td><code>&lt;step&gt;.events.jsonl</code>, <code>&lt;step&gt;.otel.jsonl</code></td><td>The harness (Lab 6, menu C)</td><td>yes</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Copilot SDK for .NET: what we used</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Code</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><code>#:package GitHub.Copilot.SDK@1.0.34</code></td><td>NuGet reference in a single-file app. Namespace <code>GitHub.Copilot</code>.</td></tr>
+      <tr><td><code>new CopilotClient()</code>, <code>StartAsync()</code></td><td>Starts the Copilot runtime that the package downloaded at build time.</td></tr>
+      <tr><td><code>client.CreateSessionAsync(new SessionConfig { ... })</code></td><td>A fresh agent session. <code>Model</code>, <code>WorkingDirectory</code>, <code>EnableConfigDiscovery</code> (loads <code>.github/skills</code> and <code>.github/hooks</code>), <code>OnPermissionRequest</code>, <code>OnEvent</code>, <code>McpServers</code>, <code>Tools</code>.</td></tr>
+      <tr><td><code>session.SendAndWaitAsync(prompt, timeout)</code></td><td>Sends a message and waits until the agent is idle. <strong>The default timeout is 60 seconds</strong>: always pass a longer one.</td></tr>
+      <tr><td><code>session.SendAndWaitAsync&lt;T&gt;(prompt, timeout: ...)</code></td><td>Typed reply: schema from <code>T</code>, deserialised for you. Experimental (<code>GHCP001</code>).</td></tr>
+      <tr><td><code>e.ToJson()</code></td><td>Any session event as one line of JSON.</td></tr>
+      <tr><td><code>client.ListModelsAsync()</code></td><td>The model IDs your account can use.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>When something is stuck</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Symptom</th><th>Cause and fix</th></tr></thead>
+    <tbody>
+      <tr><td><code>TimeoutException</code> after one minute</td><td>No timeout passed to <code>SendAndWaitAsync</code> (default 60 s), or no permission handler: the agent waits for an approval that never comes.</td></tr>
+      <tr><td>The agent does not use the skill</td><td><code>SKILL.md</code> without frontmatter, wrong folder, skill not committed while using a worktree (menu A), or <code>EnableConfigDiscovery</code> missing.</td></tr>
+      <tr><td>The hook does not run</td><td>The file is not in <code>app/.github/hooks/</code>, its JSON is invalid, or <code>pwsh</code> is not on the PATH. With menu A: the hook is not committed, so the worktree does not have it.</td></tr>
+      <tr><td><code>Failed: git commit</code></td><td>Nothing to commit, or git has no <code>user.name</code> / <code>user.email</code>.</td></tr>
+      <tr><td><code>pwsh</code> not found</td><td>Install PowerShell 7. The gate runs with <code>pwsh</code>, also on macOS and Linux.</td></tr>
+      <tr><td>Model not available</td><td>Run <code>ListModelsAsync()</code> and pick another Sonnet ID.</td></tr>
+      <tr><td>Behind on a lab</td><td>Copy the snapshot of the previous lab over your starter folder: see <a href="#catch-up">Catch up</a>.</td></tr>
+      <tr><td>Build error <code>MSB3923</code>, or a failed download from github.com</td><td>The SDK downloads the Copilot runtime while it builds <code>loop.cs</code>, and the download broke off. Run the same command again.</td></tr>
+      <tr><td>First run is slow</td><td>It builds <code>loop.cs</code> and downloads the Copilot runtime. Later runs start in about a second.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Reading</h3>
+  <ul>
+    <li>Birgitta Böckeler, <a href="https://martinfowler.com/articles/harness-engineering.html">Harness engineering for coding agent users</a> (martinfowler.com, 2026): guides and sensors, computational and inferential controls.</li>
+    <li>Mitchell Hashimoto, <a href="https://mitchellh.com/writing/my-ai-adoption-journey">My AI Adoption Journey</a> (2026): "engineer the harness".</li>
+    <li>LangChain, <a href="https://www.langchain.com/blog/the-anatomy-of-an-agent-harness">The Anatomy of an Agent Harness</a> (2026).</li>
+    <li>Anthropic, <a href="https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents">Effective harnesses for long-running agents</a> (2025).</li>
+    <li>GitHub, <a href="https://github.com/github/copilot-sdk">Copilot SDK</a>: README, <code>docs/features</code> (skills, hooks, streaming events), and the .NET samples.</li>
+  </ul>
+</section>
+
+</main>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  function load(key, fallback) { try { var v = localStorage.getItem(key); return v === null ? fallback : v; } catch (e) { return fallback; } }
+  function save(key, value) { try { localStorage.setItem(key, value); } catch (e) { /* storage unavailable: the page works without it */ } }
+
+  // --- pipeline strips ------------------------------------------------------
+  // [label, lab in which it appears, model?]  lab 0 = outside today's code
+  var stages = [
+    ['/plan', 1, 'model'], ['/implement', 1, 'model'], ['quality-gate.ps1', 3], ['/review', 5, 'model'],
+    ['commit', 1], ['push + merge request', 0]
+  ];
+  var renamed = { '/plan': 'plan prompt', '/implement': 'implement prompt' };
+  document.querySelectorAll('.pipe:not(.static)').forEach(function (pipe) {
+    // data-start: only the starting loop, with the steps as they are in the starter (prompts, not skills)
+    var startOnly = pipe.hasAttribute('data-start');
+    var lab = startOnly ? 1 : Number(pipe.getAttribute('data-lab'));
+    var all = startOnly || pipe.hasAttribute('data-all');
+    var shown = startOnly ? stages.filter(function (s) { return s[1] === 1; }) : stages;
+    shown.forEach(function (s, i) {
+      if (i > 0) { var a = document.createElement('span'); a.className = 'arrow'; a.setAttribute('aria-hidden', 'true'); a.textContent = '›'; pipe.appendChild(a); }
+      var el = document.createElement('span');
+      var on = s[1] > 0 && s[1] <= lab;
+      var isNew = !all && (s[1] === lab || (lab === 2 && s[2] && s[1] === 1 && s[0] !== '/review'));
+      el.className = 'st' + (on ? ' on' : '') + (isNew ? ' new' : '') + (s[2] ? ' model' : '');
+      el.textContent = (lab === 1 && renamed[s[0]]) ? renamed[s[0]] : s[0];
+      el.title = s[1] === 0 ? 'outside today’s code' : on ? 'there from Lab ' + s[1] : 'comes in Lab ' + s[1];
+      pipe.appendChild(el);
+    });
+    var note = document.createElement('div');
+    note.className = 'pipe-note';
+    note.textContent = startOnly ? 'Two prompts written in C#, then a commit. No checks, no feedback, no evidence.'
+      : lab === 1 ? 'Two prompts in C#, then a commit. No checks.'
+      : lab === 2 ? 'Filled: the steps become skills. The harness only names the skill and the work item.'
+      : lab === 3 ? 'Filled: new in this lab. Dashed: still to come, or outside today’s code.'
+      : lab === 6 ? 'No new step: every step now leaves its full event log in the work item folder.'
+      : lab === 7 ? 'No new step: the improvement loop runs outside the harness, in an interactive session with you.'
+      : all ? 'From /implement to /review the loop repeats, up to three attempts: a red gate or a high or medium finding goes back to /implement as a feedback file.'
+      : 'From /implement onwards the loop now repeats, with the gate output (and later the review) as feedback.';
+    pipe.appendChild(note);
+  });
+
+  // --- copy buttons -----------------------------------------------------------
+  document.querySelectorAll('.code:not(.out)').forEach(function (block) {
+    var pre = block.querySelector('pre');
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var text = pre.innerText;
+      function done() { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy'; }, 1200); }
+      function select() { var r = document.createRange(); r.selectNodeContents(pre); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = 'Selected'; }
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, select); else select();
+    });
+    block.appendChild(btn);
+  });
+
+  // --- step checkboxes with progress -----------------------------------------
+  document.querySelectorAll('section.lab').forEach(function (lab) {
+    var id = lab.id, items = lab.querySelectorAll('.steps > li');
+    var counter = document.querySelector('[data-count="' + id + '"]');
+    function refresh() {
+      var done = lab.querySelectorAll('.steps > li.done').length;
+      if (counter) counter.textContent = done + '/' + items.length;
+    }
+    items.forEach(function (li, i) {
+      var key = 'hw2-' + id + '-' + i;
+      var box = document.createElement('input');
+      box.type = 'checkbox'; box.id = 'step-' + id + '-' + i;
+      box.setAttribute('aria-label', 'Step ' + (i + 1) + ' done');
+      box.checked = load(key, '0') === '1';
+      li.classList.toggle('done', box.checked);
+      box.addEventListener('change', function () { li.classList.toggle('done', box.checked); save(key, box.checked ? '1' : '0'); refresh(); });
+      li.insertBefore(box, li.firstChild);
+    });
+    refresh();
+  });
+
+  // --- agenda clock times ------------------------------------------------------
+  var start = document.getElementById('start-time');
+  function renderAgenda() {
+    var parts = (start.value || '13:00').split(':'), t = Number(parts[0]) * 60 + Number(parts[1]);
+    document.querySelectorAll('.agenda tbody tr').forEach(function (row) {
+      var h = Math.floor(t / 60) % 24, m = t % 60;
+      row.cells[0].textContent = (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+      t += Number(row.getAttribute('data-min'));
+    });
+    save('hw2-start-pm', start.value);
+  }
+  start.value = load('hw2-start-pm', '13:00');   // new key: the old one stored 09:00 on every visit
+  start.addEventListener('input', renderAgenda);
+  renderAgenda();
+
+  // --- highlight the current section in the contents ---------------------------
+  var links = {};
+  document.querySelectorAll('.toc a').forEach(function (a) { links[a.getAttribute('href').slice(1)] = a; });
+  if ('IntersectionObserver' in window) {
+    var seen = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        Object.keys(links).forEach(function (k) { links[k].classList.remove('here'); });
+        if (links[e.target.id]) links[e.target.id].classList.add('here');
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    document.querySelectorAll('main > section').forEach(function (s) { seen.observe(s); });
+  }
+})();
+</script>
+</body>
+</html>

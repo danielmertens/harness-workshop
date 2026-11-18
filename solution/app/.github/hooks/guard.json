@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "pwsh -NoProfile -File .github/hooks/guard.ps1",
+        "powershell": "pwsh -NoProfile -File .github/hooks/guard.ps1",
+        "cwd": ".",
+        "timeoutSec": 15
+      }
+    ]
+  }
+}

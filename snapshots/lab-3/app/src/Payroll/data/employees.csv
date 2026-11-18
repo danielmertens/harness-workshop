@@ -1,0 +1,8 @@
+id;name;department;birthDate;hireDate;monthlySalary;hoursPerWeek;taxCredit
+E001;Sanne de Vries;HR;1985-03-12;2015-09-01;4200.00;40;yes
+E002;Daan Jansen;Payroll;1992-07-30;2021-02-15;3600.00;32;yes
+E003;Fatima El Amrani;Finance;1978-01-01;2004-01-01;5800.00;36;no
+E004;Lucas Bakker;IT;1999-11-05;2026-03-15;3100.00;40;yes
+E005;Noor Visser;HR;1968-05-20;1996-04-01;4950.00;24;yes
+E006;Thomas Smit;Sales;1990-12-31;2019-06-01;2850.00;40;no
+E007;Emma Mulder;Payroll;2001-02-28;2026-11-16;2750.00;40;yes
