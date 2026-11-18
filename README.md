@@ -21,3 +21,4 @@ You need the .NET SDK 10 or later, git, PowerShell 7 (`pwsh`) and a GitHub accou
 | `starter/` | Where you work: the loop (`loop.cs`) and the app the agent works in (`app/`). |
 | `snapshots/` | The starter folder at the end of each lab. Fell behind? Copy the one you need (see its `README.md`). |
 | `solution/` | The finished loop and skills, to compare with your own. |
+| `nuget.config` | Restores NuGet packages from nuget.org only, so other feeds on your machine do not get in the way. |
