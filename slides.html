@@ -35,6 +35,10 @@ h2 { font-size: 80px; }
 p, li { font-size: 36px; line-height: 1.4; margin: 0; }
 .lede { font-size: 44px; line-height: 1.35; color: var(--muted); max-width: 1500px; }
 .dark .lede { color: var(--dark-muted); }
+.repo-link { align-self: flex-start; display: flex; align-items: baseline; gap: 36px; padding: 28px 48px; border: 3px solid var(--dark-accent);
+  border-left-width: 14px; border-radius: 0 16px 16px 0; background: #11303f; font: 500 36px var(--font-mono); letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--dark-muted); }
+.repo-link a { font: 600 76px var(--font-mono); letter-spacing: 0; text-transform: none; color: #fbfbf8; text-decoration: none; }
 b { font-weight: 600; }
 code { font: 500 0.88em var(--font-mono); background: var(--accent-soft); padding: 2px 10px; border-radius: 6px; }
 .dark code { background: #17303f; color: var(--dark-ink); }
@@ -134,6 +138,7 @@ ol.check li { font-size: 36px; }
   <h1>How do you trust an agent<br>to work on its own?</h1>
   <p class="lede">Build a development loop around the model, with the GitHub Copilot SDK and .NET.</p>
   <div class="spacer"></div>
+  <p class="repo-link">Workshop files: <a href="https://bit.ly/4Ca2Fxo">bit.ly/4Ca2Fxo</a></p>
 </section>
 
 <!-- 2 · ask the room -->
